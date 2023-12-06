@@ -6,8 +6,10 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -60,32 +62,54 @@ public class MainActivity extends AppCompatActivity {
         tarefaBinding.button.setOnClickListener( view -> {
             String tarefaString = tarefaBinding.editTextText.getText().toString();
 
-            if ( tarefaString.isEmpty() ){
-                Toast.makeText(this, "Tarefa vazia!", Toast.LENGTH_SHORT).show();
-            }else{
-                tarefaBinding.editTextText.setText("");
-                Toast.makeText(this, "Tarefa Adicionada com sucesso", Toast.LENGTH_SHORT).show();
-                lista.add(new TarefaModel(tarefaString));
-                TarefaSaveIstance.saveTarefas(getApplicationContext(), lista);
-                loadTarefas();
-                dialog.dismiss();
-            }
+            TaskDbOperations dbOperations = new TaskDbOperations(this);
+            dbOperations.addTask(tarefaString);
+
+            loadTarefas();
+            Toast.makeText(this, "Tarefa Adicionada com sucesso", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+//
+//            if ( tarefaString.isEmpty() ){
+//                Toast.makeText(this, "Tarefa vazia!", Toast.LENGTH_SHORT).show();
+//            }else{
+//                tarefaBinding.editTextText.setText("");
+//                Toast.makeText(this, "Tarefa Adicionada com sucesso", Toast.LENGTH_SHORT).show();
+//                lista.add(new TarefaModel(tarefaString));
+//                TarefaSaveIstance.saveTarefas(getApplicationContext(), lista);
+//                loadTarefas();
+//                dialog.dismiss();
+//            }
 
         });
 
         b.setView(tarefaBinding.getRoot());
         dialog = b.create();
     }
+    @SuppressLint("NotifyDataSetChanged")
     public void loadTarefas(){
         lista.clear();
-        if ( TarefaSaveIstance.loadTarefas(getApplicationContext()) != null){
-            lista.addAll(TarefaSaveIstance.loadTarefas(getApplicationContext()));
+        TaskDbOperations dbOperations = new TaskDbOperations(this);
+
+        Cursor cursor = dbOperations.getAllTasks();
+        while (cursor.moveToNext()) {
+            @SuppressLint("Range") String task = cursor.getString(cursor.getColumnIndex(TaskContract.COLUMN_TASK));
+            lista.add(new TarefaModel(task));
+            // Faça algo com a tarefa obtida, como exibir em um Log
         }
 
         a.notifyDataSetChanged();
         if ( lista.isEmpty() ){
             Toast.makeText(this, "Nenhuma tarefa cadastrada.", Toast.LENGTH_SHORT).show();
         }
+
+//        if ( TarefaSaveIstance.loadTarefas(getApplicationContext()) != null){
+//            lista.addAll(TarefaSaveIstance.loadTarefas(getApplicationContext()));
+//        }
+//
+//        a.notifyDataSetChanged();
+//        if ( lista.isEmpty() ){
+//            Toast.makeText(this, "Nenhuma tarefa cadastrada.", Toast.LENGTH_SHORT).show();
+//        }
     }
 
 }
